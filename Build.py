@@ -4,7 +4,7 @@ import time
 import Messages
 from random import randint
 
-starting_url = 'https://ts1.travian.cz/dorf1.php'
+starting_url = 'https://ts3.travian.cz/dorf1.php'
 
 
 def resources(soup):
@@ -21,10 +21,10 @@ def build(session):
     r = session.get(starting_url)
     soup = BeautifulSoup(r.content, 'html.parser')
     chosen_one=lowest_resource_build(soup)
-    r = session.get('https://ts1.travian.cz/build.php?id='+str(chosen_one))
+    r = session.get('https://ts3.travian.cz/build.php?id='+str(chosen_one))
     soup = BeautifulSoup(r.content, 'html.parser')
     temp = soup.find('button', {'class': 'green build'})  # ziska link postavania budovy
-    session.post('https://ts1.travian.cz/' + temp['onclick'].split("'")[1])
+    session.post('https://ts3.travian.cz/' + temp['onclick'].split("'")[1])
 
 
 def lowest_resource_build(soup):
@@ -45,13 +45,20 @@ def lowest_resource_build(soup):
     return chosen_one+1
 
 
-def repetitive_build(session):
+def repetitive_build(session,min):
     '''funkcia ktora vola stavanie kazdych +-in_min minut'''
-    for x in range(5):
-        in_secs = rando(11)
+    for x in range(10):
+        in_secs = rando(min)
         Messages.build_at(in_secs)
         time.sleep(in_secs)
         build(session)
+
+
+def build_in(session,h,m,s):
+    delay = (h*60 + m)*60+s
+    Messages.build_at(delay)
+    time.sleep(delay)
+    build(session)
 
 
 def rando(min):

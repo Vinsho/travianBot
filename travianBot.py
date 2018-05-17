@@ -2,12 +2,13 @@ import requests
 import Build
 
 
-starting_url = 'https://ts1.travian.cz/dorf1.php'
+starting_url = 'https://ts3.travian.cz'
 
 
 class Travian:
-    def __init__(self, username, password):
+    def __init__(self, username, password, start_url):
         self.session = self.login(username, password)
+        self.url = start_url
 
     def login(self, username, password):
         '''prihlasi sa na ucet a vrati session'''
@@ -16,9 +17,9 @@ class Travian:
 
         with requests.session() as session:
             session.headers.update({'x-test': 'true'})
-            session.post(starting_url, data)
+            session.post(starting_url+"/dorf1.php", data)
             return session
 
 if __name__ == '__main__':
-    travian = Travian("Scasike", "firebrand")
-    Build.repetitive_build(session)
+    travian = Travian("Scasike", "firebrand", starting_url)
+    Build.repetitive_build(travian.session,3)
