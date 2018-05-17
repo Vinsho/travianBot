@@ -15,5 +15,6 @@ def login():
         session.post(starting_url, data)
         return session
 
+
 session=login()
-Build.build(session)
+Build.repetitive_build(session)

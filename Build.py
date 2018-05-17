@@ -1,8 +1,7 @@
 from bs4 import BeautifulSoup
 import re
-import schedule
 import time
-import datetime
+import Messages
 from random import randint
 
 starting_url = 'https://ts1.travian.cz/dorf1.php'
@@ -34,7 +33,6 @@ def lowest_resource_build(soup):
     res = resources(soup)
     min_res = str(min(res, key=lambda x: res[x]))
     print(res)
-    print(min_res)
     lvls = []
     for each in soup.find_all('area'):
         lvls += each.get('alt')
@@ -43,22 +41,20 @@ def lowest_resource_build(soup):
     for x in enum[min_res]:
         if int(lvls[x]) < int(lvls[chosen_one]):
             chosen_one = int(x)
-    print("building " + min_res + str(chosen_one + 1))
+    print("building " + min_res + ", id=" + str(chosen_one + 1))
     return chosen_one+1
 
 
 def repetitive_build(session):
     '''funkcia ktora vola stavanie kazdych +-in_min minut'''
-    in_min = 11
-    schedule.every(rando(in_min)).seconds.do(build, session=session)
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    for x in range(5):
+        in_secs = rando(11)
+        Messages.build_at(in_secs)
+        time.sleep(in_secs)
+        build(session)
 
 
 def rando(min):
     '''vracia random cas v intervale (min-2,min+2) v sekundach a vypise kedy sa to stane'''
-    rand_secs = (randint((min-2)*100, (min+2)*100) / 100)*60
-    buildin_in = time.time() + rand_secs
-    print("next build at: " + datetime.datetime.fromtimestamp(buildin_in).strftime('%Y-%m-%d %H:%M:%S'))
+    rand_secs = abs((randint((min-2)*100, (min+2)*100) / 100)*60)
     return rand_secs
