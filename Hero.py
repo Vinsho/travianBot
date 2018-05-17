@@ -10,10 +10,8 @@ def get_adventures(session, url):
     table_body = table.find('tbody')
     rows = table_body.find_all('tr')
     for row in rows:
-        test = row.find_all('td')
-        a = test[2].renderContents()
-        a = str(a)
-        adventures.append([a[18:25], row['id'][9:]])
+        udaje = row.find_all('td')
+        adventures.append([udaje[0].text.strip(), udaje[2].text.strip(), udaje[3].find('img', alt=True)['alt'], udaje[4].text.strip(), row['id'][9:]])
     return adventures
 
 def go_on_adventure(session, id_dobrodruzstva, url):
@@ -22,14 +20,27 @@ def go_on_adventure(session, id_dobrodruzstva, url):
     button = soup.find("button", {"class": "green "})
     url = url + "/start_adventure.php?from=list&kid=" + id_dobrodruzstva
     print(url)
-    session.post(url, {"value":"Jít na výpravu"})
+    session.post(url, {"value": "Jít na výpravu", 'send' : '1', 'kid' : id_dobrodruzstva, 'a':'1', 'from':'list'})
 
 def get_hero_status(session, url):
     r = session.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
     table = soup.find('div', attrs={'class':'heroStatusMessage'})
-    print(table.renderContents())
+    return table.text.strip()
 
-travian = travianBot.Travian("Scasike", "firebrand")
-adventures = get_adventures(travian.session, "https://ts1.travian.cz/hero.php?t=3")
-go_on_adventure(travian.session, adventures[0][1], "https://ts1.travian.cz")
+def get_first_adventure_to_expire_index(adventures):
+    ad_times = [(i, x[3].split(":")) for i, x in enumerate(adventures)]
+    for i, time in enumerate(ad_times):
+        ad_times[i] = i, int(time[1][0])*3600 + int(time[1][1])*60 + int(time[1][2])
+    minimum = ad_times[0][1]
+    minimum_id = 0
+    for i, time in enumerate(ad_times):
+        if time[1] < minimum:
+            minimum, minimum_id = time, i
+    return minimum_id
+
+if __name__ == "__main__":
+    # travian = travianBot.Travian("Scasike", "firebrand")
+    # adventures = get_adventures(travian.session, "https://ts1.travian.cz/hero.php?t=3")
+    # print(adventures)
+    # get_hero_status(travian.session, "https://ts1.travian.cz/dorf1.php")
