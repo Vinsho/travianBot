@@ -28,19 +28,20 @@ def get_hero_status(session, url):
     table = soup.find('div', attrs={'class':'heroStatusMessage'})
     return table.text.strip()
 
-def get_first_adventure_to_expire_index(adventures):
-    ad_times = [(i, x[3].split(":")) for i, x in enumerate(adventures)]
+def get_first_adventure_to_expire_id(adventures):
+    ad_times = [(x[4], x[3].split(":")) for i, x in enumerate(adventures)]
     for i, time in enumerate(ad_times):
-        ad_times[i] = i, int(time[1][0])*3600 + int(time[1][1])*60 + int(time[1][2])
+        ad_times[i] = time[0], int(time[1][0])*3600 + int(time[1][1])*60 + int(time[1][2])
     minimum = ad_times[0][1]
-    minimum_id = 0
+    minimum_id = ad_times[0][0]
     for i, time in enumerate(ad_times):
         if time[1] < minimum:
-            minimum, minimum_id = time, i
+            minimum, minimum_id = time, time[0]
     return minimum_id
 
 if __name__ == "__main__":
-    # travian = travianBot.Travian("Scasike", "firebrand")
-    # adventures = get_adventures(travian.session, "https://ts1.travian.cz/hero.php?t=3")
-    # print(adventures)
-    # get_hero_status(travian.session, "https://ts1.travian.cz/dorf1.php")
+    travian = travianBot.Travian("Scasike", "firebrand", 'https://ts3.travian.cz')
+    adventures = get_adventures(travian.session, "https://ts3.travian.cz/hero.php?t=3")
+    id_a = get_first_adventure_to_expire_id(adventures)
+    print(id_a)
+    go_on_adventure(travian.session, id_a, travian.url)
