@@ -29,15 +29,14 @@ class Build:
             print(url)
         return BeautifulSoup(self.session.get(url).content, 'html.parser')
 
-    def build(self):
-        chosen_one = self.lowest_resource_build(self.get_soup())
+    def build_lowest(self):
+        chosen_one = self.get_lowest_resource(self.get_soup())
         soup = self.get_soup('https://ts3.travian.cz/build.php?id=' +\
                              str(chosen_one))
         temp = soup.find('button', {'class': 'green build'})  # ziska link postavania budovy
-        self.session.post('https://ts3.travian.cz/' + temp['onclick'].split("'")[1])
+        self.session.post(self.ulr[:-9] + temp['onclick'].split("'")[1])
 
-
-    def lowest_resource_build(self, soup):
+    def get_lowest_resource(self, soup):
         '''funkcia ktora vrati id policka typu suroviny, ktorej je najmenej a najnizsieho lvlu '''
         enum = {'drevo': [0, 2, 13, 16], 'hlina': [4, 5, 15, 17],
                 'zelezo': [3, 6, 9, 10], 'obilie': [1, 7, 8, 11, 12, 14]}
@@ -57,7 +56,6 @@ class Build:
             print("building " + min_res + ", id=" + str(chosen_one + 1))
         return chosen_one+1
 
-
     def repetitive_build(session, min):
         '''funkcia ktora vola stavanie kazdych +-in_min minut'''
         for x in range(10):
@@ -66,12 +64,26 @@ class Build:
             time.sleep(in_secs)
             self.build()
 
-
     def build_in(self, h, m, s):
         delay = (h*60 + m)*60+s
         Messages.build_at(delay)
         time.sleep(delay)
         self.build()
+
+    def get_production_per_hour(self):
+        '''
+            Vrati hodinovu produkciu dediny
+            return: {'Surovina': mnozstvo}
+        '''
+        recourses = dict()
+        soup = self.get_soup()
+        table = soup.find('table', {'id':'production'})
+        rows = table.find('tbody').find_all('tr')
+        for row in rows:
+            tds = row.find_all('td')
+            num = int(tds[2].text.strip().encode('ascii', 'ignore'))
+            recourses[tds[1].text.strip()[:-1]] = num
+        return recourses
 
 
 def rando(min):
