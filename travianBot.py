@@ -1,14 +1,18 @@
 import requests
-import Build
+from Build import Build
+from Hero import *
 
 
 starting_url = 'https://ts3.travian.cz'
 
 
 class Travian:
-    def __init__(self, username, password, start_url):
+    def __init__(self, username, password, start_url, debug=False):
         self.session = self.login(username, password)
         self.url = start_url
+
+        self.build = Build(self.session, self.url, debug)
+        self.hero = Hero(self.session, self.url, debug)
 
     def login(self, username, password):
         '''prihlasi sa na ucet a vrati session'''
@@ -21,5 +25,6 @@ class Travian:
             return session
 
 if __name__ == '__main__':
-    travian = Travian("Scasike", "firebrand", starting_url)
-    Build.repetitive_build(travian.session,3)
+    travian = Travian("Scasike", "firebrand", starting_url, True)
+    travian.build.build()
+    # Build.repetitive_build(travian.session,3)
