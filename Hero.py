@@ -33,6 +33,11 @@ class Hero:
                                 'kid' : id_dobrodruzstva, 'a':'1',
                                 'from':'list'})
 
+    def go_on_first_to_expire_adventure(self):
+        adventures = self.get_adventures()
+        adventure = get_first_adventure_to_expire_id(adventures)
+        self.go_on_adventure(adventure)
+
     def get_hero_status(self):
         table = self.get_soup().find('div', attrs={'class':'heroStatusMessage'})
         return table.text.strip()
@@ -50,7 +55,7 @@ def get_first_adventure_to_expire_id(adventures):
 
 if __name__ == "__main__":
     travian = travianBot.Travian("Scasike", "firebrand", 'https://ts3.travian.cz')
-    adventures = get_adventures(travian.session, "https://ts3.travian.cz/hero.php?t=3")
+    adventures = Hero.get_adventures()
     id_a = get_first_adventure_to_expire_id(adventures)
     print(id_a)
     go_on_adventure(travian.session, id_a, travian.url)

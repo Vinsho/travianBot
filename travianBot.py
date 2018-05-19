@@ -1,6 +1,7 @@
 import requests
 from Build import Build
 from Hero import *
+from Army import *
 
 
 starting_url = 'https://ts3.travian.cz'
@@ -13,6 +14,7 @@ class Travian:
 
         self.build = Build(self.session, self.url, debug)
         self.hero = Hero(self.session, self.url, debug)
+        self.army = Army(self.session, self.url, debug)
 
     def login(self, username, password):
         '''prihlasi sa na ucet a vrati session'''
@@ -24,7 +26,10 @@ class Travian:
             session.post(starting_url+"/dorf1.php", data)
             return session
 
+
 if __name__ == '__main__':
     travian = Travian("Scasike", "firebrand", starting_url, True)
-    travian.build.build()
-    # Build.repetitive_build(travian.session,3)
+    #travian.build.build_lowest()
+    #travian.hero.go_on_first_to_expire_adventure()
+    troops = travian.army.get_troops()
+    print(travian.army.translator(troops))
