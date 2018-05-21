@@ -7,6 +7,7 @@ class Army:
         self.debug = debug
         self.url = url + '/dorf1.php'
         self.troop_send_url = url + '/build.php?tt=2&id=39'
+        self.confirm_troop_send_url = url + '/build.php?id=39&tt=2'
 
     def get_soup(self,url):
         return BeautifulSoup(self.session.get(url).content, 'html.parser')
@@ -32,7 +33,7 @@ class Army:
         hidden_tags = soup.findAll('input', {'type': 'hidden'})
         data = {tag['name']: tag['value'] for tag in hidden_tags}
         data['s1'] = 'ok'
-        self.session.post("https://ts3.travian.cz/build.php?id=39&tt=2", data)
+        self.session.post(self.confirm_troop_send_url, data)
 
 
     def translator(self,troops):
@@ -42,4 +43,4 @@ class Army:
         return translated
 
 if __name__ == "__main__":
-    travian = travianBot.Travian("Scasike", "firebrand",'https://ts3.travian.cz/dorf1.php')
+    sewa
