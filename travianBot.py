@@ -31,5 +31,5 @@ if __name__ == '__main__':
     travian = Travian("Scasike", "firebrand", starting_url, True)
     #travian.build.build_lowest()
     #travian.hero.go_on_first_to_expire_adventure()
-    troops = travian.army.get_troops()
-    print(travian.army.translator(troops))
+    troops = travian.army.translator(travian.army.get_troops())
+    travian.army.send_raid(troops,-34,74)

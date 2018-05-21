@@ -20,13 +20,24 @@ class Army:
         troops = dict(zip(keys,values))
         return troops
 
-    # def sent_troops(self,troops,x,y):
-    #     soup = travian.get_soup(self.troop_send_url)
-    #     for troops.items
+    def send_raid(self, troops, x, y):
+        soup = self.get_soup(self.troop_send_url)
+        hidden_tags = soup.findAll('input',{'type': 'hidden'})
+        data = {tag['name']: tag['value'] for tag in hidden_tags}
+        for k, v in troops.items():
+            data.update({k: v})
+        data.update({'x': x, 'y': y, 'c': '4', 's1': 'ok'})
+        confirmation = self.session.post(self.troop_send_url, data).content
+        soup = BeautifulSoup(confirmation, 'html.parser')
+        hidden_tags = soup.findAll('input', {'type': 'hidden'})
+        data = {tag['name']: tag['value'] for tag in hidden_tags}
+        data['s1'] = 'ok'
+        self.session.post("https://ts3.travian.cz/build.php?id=39&tt=2", data)
+
 
     def translator(self,troops):
         '''premeni keys(f.e.Pálkařů) na t1,t2..'''
-        table = {'Pálkařů': 't1'}
+        table = {'Pálkařů': 't1','Hrdina': 't11'}
         translated = {table[k]: v for k, v in troops.items()}
         return translated
 
