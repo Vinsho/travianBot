@@ -17,20 +17,17 @@ class Build:
     def resources(self):
         '''funkcia na ziskanie momentalneho stavu surovin v podobe dict'''
         soup = self.get_soup(self.url)
-        res = soup.find_all('span', {'class': 'value'})
-        resources = {"Dřevo": (res[1].contents[0]), "Hlína": res[2].contents[0],
-                     "Železo": res[3].contents[0], "Obilí": res[5].contents[0]}
-
-        for k, v in resources.items():
-            resources[k] = re.search(r'\b\d+\b', v).group(0)
+        res = soup.findAll('script',{'type': 'text/javascript'})[21].prettify().split("{")[2].split("}")[0].split(': ')
+        resources = {"Dřevo": res[1].split(',')[0], "Hlína": res[2].split(',')[0],  # split je laska, don't hate
+                     "Železo": res[3].split(',')[0], "Obilí": res[4].split(',')[0].split(' ')[0]}
         return resources
 
     def get_soup(self, url=None):
         if url is None:
             return BeautifulSoup(self.session.get(self.url).content,
                                  'html.parser')
-        if self.debug:
-            print(url)
+        # if self.debug:
+        #     print(url)
         return BeautifulSoup(self.session.get(url).content, 'html.parser')
 
     def upgrade(self, chosen_one):
@@ -43,11 +40,14 @@ class Build:
            pokial je uz budova postavena, da ju upgradovat, ked nie da ju stavat.
         '''
         if any (building == x for x in self.resources().keys()):
-            self.upgrade(self.get_id_of_lowest_res_lvl(building))
+            id = self.get_id_of_lowest_res_lvl(building)
+            self.upgrade(id)
         elif self.is_building_built(building) != -1:
-            self.upgrade(self.get_building_id(building))
+            id = self.get_building_id(building)
+            self.upgrade(id)
         else:
-            soup = self.get_soup(self.build_url + self.get_free_building_place_id())
+            id = self.get_free_building_place_id()
+            soup = self.get_soup(self.build_url + id + '&category='+ self.get_building_category(id, building))
             divs = soup.findAll('div', {'class': 'buildingWrapper'})
             for i in range(len(divs)):
                 if divs[i].find('h2').string == building:
@@ -55,6 +55,9 @@ class Build:
                     break
             button_link = divs[index].find('button', {'class': 'green new'})['onclick'].split("'")[1]
             self.session.post(self.url[:-9] + button_link)
+            id = self.get_building_id(building)
+        if self.debug:
+            Messages.building(building, id, self.get_building_lvl(building, id=id))
 
     def get_lowest_resource_type(self):
         '''vrati surovinu ktorej je najmenej'''
@@ -75,8 +78,6 @@ class Build:
         for x in enum[res]: # prejde vsetky policka min_res suroviny a zisti ktore ma najmensi lvl
             if int(lvls[x]) < int(lvls[chosen_one]):
                 chosen_one = int(x)
-        if self.debug:
-            print("building " + res + ", id=" + str(chosen_one + 1))
         return chosen_one+1
 
     # def repetitive_build(self, min):
@@ -114,6 +115,7 @@ class Build:
         return recourses
 
     def get_warehouse_capacity(self):
+        '''vrati kapacitu skladu'''
         soup = self.get_soup()
         capacity = float(soup.find('span', {'id': 'stockBarWarehouse'}).string.encode('ascii', 'ignore'))
         if capacity < 800:
@@ -121,6 +123,7 @@ class Build:
         return capacity
 
     def get_granary_capacity(self):
+        '''vrati kapacitu sypky'''
         soup = self.get_soup()
         capacity = float(soup.find('span', {'id': 'stockBarGranary'}).string.encode('ascii', 'ignore'))
         if capacity < 800:
@@ -128,11 +131,13 @@ class Build:
         return capacity
 
     def get_free_crop(self):
+        '''vrati volne obilne policka pre stavanie'''
         soup = self.get_soup()
         free_crop = soup.find('span', {'id': 'stockBarFreeCrop'}).text.strip().encode('ascii', 'ignore')
         return int(free_crop)
 
     def get_free_building_place_id(self):
+        '''vrati id volneho placu na stavanie'''
         soup = self.get_soup(self.dorf2_url)
         building_places = soup.findAll('area', {'alt': 'Staveniště'})
         return str(building_places[0]['href'].split('=')[1])
@@ -148,14 +153,20 @@ class Build:
         else:
             return -1
 
-    def get_building_lvl(self, building):
-        '''vrati lvl budovy, pokial nie je postavena -1'''
-        index = self.get_building_id(building)
+    def get_building_lvl(self, building, id=0):
+        '''vrati lvl budovy podla nazvu alebo podla id, pokial nie je postavena 0'''
+        if id==0 :
+            index = self.get_building_id(building)
+        else:
+            index = id
         if index != -1:
             soup = self.get_soup(self.build_url + str(index))
-            return int(soup.find('span', {'class':  'level'}).string.split(" ")[1])
+            lvl = int(soup.find('span', {'class':  'level'}).string.split(" ")[1])
+            if soup.find('tr', {'class': 'underConstruction'}) != None : #kontrola ci sa budova nestava
+                lvl += 1
+            return lvl
         else:
-            return -1
+            return 0
 
     def get_building_id(self, building):
         '''vrati id budovy, pokial nie je postavena vracia -1'''
@@ -165,10 +176,23 @@ class Build:
         else:
             return -1
 
+    def get_building_category(self, id, building):
+        '''ziska kategoriu budovy na stavanie ( infrastruktura, vojenske, surovinove)'''
+        for i in range(1,4):
+            soup = self.get_soup(self.build_url + str(id) + "&category="+ str(i)).prettify()
+            if soup.find(building) > 0:
+                return str(i)
+        return str(0)
+
+    def get_unable_to_build_in_secs(self):
+        soup = self.get_soup(self.url)
+        temp = soup.find('div', {'class': 'buildDuration'})
+        return int(temp.span['value'])
+
     def what_to_build(self):
         '''funkcia ktora vrati podla podmienok co sa ma dalej stavat'''
         pop = self.get_pop()
-        if self.get_free_crop() < 5:
+        if self.get_free_crop() < 7:
             return 'Obilí'
         if pop/15 > self.get_building_lvl('Hlavní budova'):  # kazdych 15 pop + 1 uroven hlavnej budovy
             return 'Hlavní budova'
@@ -178,6 +202,8 @@ class Build:
                 return 'Sklad surovin'
         if prod['Obilí'] > self.get_granary_capacity()/8:
             return 'Sýpka'
+        if pop > 30 and pop/50 > self.get_building_lvl('Zemní hráz'):
+            return 'Zemní hráz'
         return self.get_lowest_resource_type()
 
     def rando(self,min):
