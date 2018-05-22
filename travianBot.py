@@ -31,17 +31,30 @@ def automat():
     while True:
         travian = Travian("Scasike", "firebrand", starting_url, True)
         secs = travian.build.rando(20)
+        s = 0
         adventures = travian.hero.get_adventures()
         if adventures != {} and travian.hero.get_hero_status() == "v domovské vesnici":
             travian.hero.go_on_first_to_expire_adventure()
-        travian.build.build(travian.build.what_to_build())
-        Messages.build_at(secs)
-        time.sleep(secs)
+        next_build = travian.build.what_to_build()
+        try:  # skusi postavat
+            travian.build.build(next_build)
+            Messages.next_build(secs)
+        except:
+            try :  #  zisti ci sa nieco stava
+                s = travian.build.rando(round(travian.build.get_unable_to_build_in_secs()/60))
+                Messages.write_excep(s,'Something is being built')
+                time.sleep(s)
+            except:  # pokial sa dostane sem tak to znamena, ze je malo surovin na stavanie a uspi sa cca na hodinu
+                s = travian.build.rando(60)
+                Messages.write_excep(s, 'Not enough resources')
+                time.sleep(s)
+        if s == 0:
+            time.sleep(secs)
 
 if __name__ == '__main__':
     automat()
     # travian = Travian("Scasike", "firebrand", starting_url, True)
-    #print(travian.build.get_production_per_hour())
+    # print(travian.build.resources())
     # travian.build.build(travian.build.what_to_build())
     # troops = travian.army.translator(travian.army.get_troops())
     # travian.army.send_raid(troops,-34,74)
