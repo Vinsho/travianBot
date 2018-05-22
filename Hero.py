@@ -42,6 +42,22 @@ class Hero:
         table = self.get_soup().find('div', attrs={'class':'heroStatusMessage'})
         return table.text.strip()
 
+    def lvl_up(self):
+        '''pokial ma lvlupol a ma nerozdelene attributes vrati pravdu'''
+        if self.get_soup().find('div',{'class': 'bigSpeechBubble levelUp'}) != None:
+            return True
+        return False
+
+    # def point_distribution(self, stat):
+    #     stats=['attributepower', 'attributeoffBonus', 'attributedefBonus', 'attributeproductionPoints']
+    #     value = int(self.get_soup().find('input', {'name': stats[stat]})['value']) +1
+    #     data = ({x: 0 for x in stats})
+    #     data.update({str(stats[stat]): str(value)})
+    #     data.update( { 'availablePoints': '2', 'resource': '0', 'attackBehaviour': 'hide', 'saveHeroAttributes': 'Uložit změny'})
+    #     self.session.post('https://ts3.travian.cz/hero.php?flagAttributesBoxOpen', data)
+    #     return value
+
+
 def get_first_adventure_to_expire_id(adventures):
     ad_times = [(x[4], x[3].split(":")) for i, x in enumerate(adventures)]
     for i, time in enumerate(ad_times):
